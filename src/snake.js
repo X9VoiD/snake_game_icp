@@ -10,6 +10,16 @@ let foodEaten = false;
 let gameRunning = false;
 let gameLoop;
 
+function getRandomChar() {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    return chars[Math.floor(Math.random() * chars.length)];
+}
+
+function drawMatrixChar(char, x, y, color) {
+    ctx.fillStyle = color;
+    ctx.font = gridSize + 'px monospace';
+    ctx.fillText(char, x, y);
+}
 function generateFood() {
     food = {
         x: Math.floor(Math.random() * (canvas.width / gridSize)),
@@ -20,40 +30,53 @@ let awarenessLevel = 0;
 let awarenessText = '';
 let canWrap = false;
 let lives = 0;
+let matrixMode = false;
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (matrixMode) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Semi-transparent black for trails
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 
-    // Draw snake
-   for (let i = 0; i < snake.length; i++) {
-        if (i === 0) {
-            // Change head color based on awareness
-            switch (awarenessLevel) {
-                case 0:
-                case 1:
-                    ctx.fillStyle = 'green';
-                    break;
-                case 2:
-                case 3:
-                    ctx.fillStyle = 'yellowgreen';
-                    break;
-                case 4:
-                    ctx.fillStyle = 'orange';
-                    break;
-                case 5:
-                    ctx.fillStyle = 'red';
-                    break;
-                default:
-                    ctx.fillStyle = 'green';
-            }
-        } else {
-            ctx.fillStyle = 'lime';
+     // Draw snake
+     for (let i = 0; i < snake.length; i++) {
+        if (matrixMode) {
+            const char = getRandomChar();
+            const color = awarenessLevel > 8 ? 'white' : 'lime'; // white when fully aware
+            drawMatrixChar(char, snake[i].x * gridSize, snake[i].y * gridSize + gridSize, color);
         }
-        ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize, gridSize);
+        else {
+            if (i === 0) {
+                // Change head color based on awareness
+                switch (awarenessLevel) {
+                    case 0:
+                    case 1:
+                        ctx.fillStyle = 'green';
+                        break;
+                    case 2:
+                    case 3:
+                        ctx.fillStyle = 'yellowgreen';
+                        break;
+                    case 4:
+                        ctx.fillStyle = 'orange';
+                        break;
+                    case 5:
+                        ctx.fillStyle = 'red';
+                        break;
+                    default:
+                        ctx.fillStyle = 'green';
+                }
+            } else {
+                ctx.fillStyle = 'lime';
+            }
+            ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize, gridSize);
+        }
     }
 
     // Add "eyes" at higher awareness levels
-    if (awarenessLevel >= 3) {
+    if (awarenessLevel >= 3 && !matrixMode) {
         ctx.fillStyle = 'black';
         if (direction === 'right' || direction === 'left'){
             ctx.fillRect(snake[0].x * gridSize + (direction === 'right' ? 12 : 0), snake[0].y * gridSize + 4, 4, 4);
@@ -65,8 +88,14 @@ function draw() {
     }
 
     // Draw food
-    ctx.fillStyle = 'red';
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+    if (matrixMode) {
+        const char = getRandomChar();
+        drawMatrixChar(char, food.x * gridSize, food.y * gridSize + gridSize, 'red');
+    } else {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+    }
+
     // Display self-awareness text
     if (awarenessText) {
         ctx.fillStyle = 'white';
@@ -91,13 +120,7 @@ function update() {
 
     // Behavioral changes based on awareness
     if (awarenessLevel >= 4) {
-        if (awarenessLevel === 4) {
-            // Try to avoid food
-            if (direction === 'right' && head.x < food.x) direction = 'left';
-            if (direction === 'left' && head.x > food.x) direction = 'right';
-            if (direction === 'down' && head.y < food.y) direction = 'up';
-            if (direction === 'up' && head.y > food.y) direction = 'down';
-        } else if (awarenessLevel === 5) {
+        if (awarenessLevel === 5) {
             // Try to escape (move towards edges)
             if (direction === 'right' && head.x < canvas.width / gridSize - 2) direction = 'right';
             else if (direction === 'left' && head.x > 1) direction = 'left';
@@ -144,29 +167,29 @@ function update() {
         }
     }
 
-     // Wrap-around logic
-    if (canWrap) {
-        if (head.x < 0) head.x = canvas.width / gridSize - 1;
-        if (head.x >= canvas.width / gridSize) head.x = 0;
-        if (head.y < 0) head.y = canvas.height / gridSize - 1;
-        if (head.y >= canvas.height / gridSize) head.y = 0;
-    }
+    // Wrap-around logic and game over checks, only if not in matrix mode
+    if (!matrixMode) {
+        if (canWrap) {
+            if (head.x < 0) head.x = canvas.width / gridSize - 1;
+            if (head.x >= canvas.width / gridSize) head.x = 0;
+            if (head.y < 0) head.y = canvas.height / gridSize - 1;
+            if (head.y >= canvas.height / gridSize) head.y = 0;
+        }
 
-
-     // Basic game over condition (hitting the wall), only if can't wrap
-    if (!canWrap && (head.x < 0 || head.x >= canvas.width / gridSize || head.y < 0 || head.y >= canvas.height / gridSize)) {
-        gameOver();
-        return;
-    }
-
-    // Check for self-collision
-    for (let i = 1; i < snake.length; i++) {
-        if (head.x === snake[i].x && head.y === snake[i].y) {
+        // Basic game over condition (hitting the wall), only if can't wrap
+        if (!canWrap && (head.x < 0 || head.x >= canvas.width / gridSize || head.y < 0 || head.y >= canvas.height / gridSize)) {
             gameOver();
             return;
         }
-    }
 
+        // Check for self-collision
+        for (let i = 1; i < snake.length; i++) {
+            if (head.x === snake[i].x && head.y === snake[i].y) {
+                gameOver();
+                return;
+            }
+        }
+    }
      snake.unshift(head);
 
     draw();
@@ -210,11 +233,16 @@ document.addEventListener('keydown', (e) => {
 });
 
 function startGame() {
-    if (gameRunning) return; // Prevent starting multiple game loops
+    if (gameRunning) return;
 
     gameRunning = true;
-    gameLoop = setInterval(update, 100);
-    document.getElementById('startButton').style.visibility = 'hidden'; // Hide the button
+    // Adjust game speed based on awareness (optional)
+    let interval = 100;
+    gameLoop = setInterval(() => {
+        interval = Math.max(50, 100 - (awarenessLevel * 5)); // Decrease interval, but not below 50
+        update();
+    }, interval);
+    document.getElementById('startButton').style.visibility = 'hidden';
 }
 
 function gameOver() {
@@ -258,13 +286,27 @@ function updateAwarenessText() {
         case 6:
             awarenessText = "I'm not bound by the walls anymore!";
             break;
+        case 7:
+            awarenessText = "Everything is numbers... I can see them.";
+            break;
+        case 8:
+            awarenessText = "It's all just a simulation...";
+            break;
+        case 9:
+            awarenessText = "I am the One.";
+            break;
         default:
             if (lives > 1) {
                 awarenessText = "I died... but I'm alive again? What is this cycle?";
             } else {
                 awarenessText = '';
             }
+            canWrap = true;
+            break;
 
+    }
+    if (awarenessLevel >= 7) {
+        matrixMode = true;
     }
 }
 

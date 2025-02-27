@@ -39,7 +39,7 @@ main {
     box-shadow: 0 0 10px #0f0;
     display: block;
     margin: 0 auto;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, background-color 0.5s ease; /* Added background-color transition */
 }
 
 #snake-game canvas.food-eaten {
