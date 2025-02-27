@@ -1,5 +1,37 @@
-<center>
-<img src="new.png" width="100%"/>
-<br/>
-<img src="ceu_codecamp.jpg"/>
-</center>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>My Portfolio</h1>
+    </header>
+    <main>
+        <section id="about">
+            <h2>About Me</h2>
+            <img src="assets/profile.png" alt="My Photo" width="150" height="150" class="avatar">
+            <p>
+                Hello! I'm Oscar Ivan Silvestre!
+            </p>
+        </section>
+        <section id="snake-game">
+            <h2>Self-Aware Snake Game</h2>
+            <button id="startButton">Start Game</button>
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+        </section>
+    </main>
+    <footer>
+        <p>
+            <a href="https://github.com/X9VoiD" target="_blank">
+                <img src="assets/github-mark-white.png" alt="GitHub Logo" width="30" height="30">
+            </a>
+        </p>
+        <p>&copy; 2025 My Portfolio</p>
+    </footer>
+    <script src="snake.js"></script>
+</body>
+</html>
